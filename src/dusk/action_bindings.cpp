@@ -23,6 +23,7 @@ ActionBindsMap& getActionBinds() {
         {ActionBinds::TOGGLE_MINIMAP,      {&getSettings().actionBindings.toggleMinimap,     "Toggle Minimap"}},
         {ActionBinds::OPEN_DUSKLIGHT_MENU, {&getSettings().actionBindings.openDusklightMenu, "Open Dusklight Menu"}},
         {ActionBinds::TURBO_SPEED_BUTTON,  {&getSettings().actionBindings.turboSpeedButton,  "Turbo Speed Button"}},
+        {ActionBinds::RESET_GYRO,          {&getSettings().actionBindings.resetGyro,        "Reset Gyro"}},
     };
     return actionBinds;
 }
@@ -71,12 +72,15 @@ void updateActionBindings() {
                         actionPressData[port][static_cast<int>(action)].pressedCurFrame = true;
                     }
                 } else {
-                    // If controller is active
+                    // SDL gamepad path (desktop). On Switch get_controller_for_player is always
+                    // null, so fall through to native HID button ids from the controller-config UI.
                     auto controller = aurora::input::get_controller_for_player(port);
                     if (controller) {
                         if (SDL_GetGamepadButton(controller->m_controller, static_cast<SDL_GamepadButton>(button))) {
                             actionPressData[port][static_cast<int>(action)].pressedCurFrame = true;
                         }
+                    } else if (PADIsNativeButtonDown(port, static_cast<u32>(button))) {
+                        actionPressData[port][static_cast<int>(action)].pressedCurFrame = true;
                     }
                 }
             }
