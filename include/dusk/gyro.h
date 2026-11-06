@@ -4,6 +4,7 @@ namespace dusk::gyro {
 void read(float dt);
 void getAimDeltas(float& out_yaw, float& out_pitch);
 bool queryGyroAimContext();
+void recenter();
 
 void rollgoalTick(bool play_active, s16 camera_yaw);
 void rollgoalTableOffset(s16& out_ax, s16& out_az);

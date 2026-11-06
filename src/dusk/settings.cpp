@@ -221,6 +221,12 @@ UserSettings g_userSettings = {
             ActionBindConfigVar{"actionBindings.turboButton_port2", PAD_NATIVE_BUTTON_INVALID},
             ActionBindConfigVar{"actionBindings.turboButton_port3", PAD_NATIVE_BUTTON_INVALID},
         },
+        .resetGyro {
+            ActionBindConfigVar{"actionBindings.resetGyro_port0", PAD_NATIVE_BUTTON_INVALID},
+            ActionBindConfigVar{"actionBindings.resetGyro_port1", PAD_NATIVE_BUTTON_INVALID},
+            ActionBindConfigVar{"actionBindings.resetGyro_port2", PAD_NATIVE_BUTTON_INVALID},
+            ActionBindConfigVar{"actionBindings.resetGyro_port3", PAD_NATIVE_BUTTON_INVALID},
+        },
     }
 };
 
@@ -395,6 +401,10 @@ void registerSettings() {
     Register(g_userSettings.actionBindings.turboSpeedButton[1]);
     Register(g_userSettings.actionBindings.turboSpeedButton[2]);
     Register(g_userSettings.actionBindings.turboSpeedButton[3]);
+    Register(g_userSettings.actionBindings.resetGyro[0]);
+    Register(g_userSettings.actionBindings.resetGyro[1]);
+    Register(g_userSettings.actionBindings.resetGyro[2]);
+    Register(g_userSettings.actionBindings.resetGyro[3]);
 }
 
 // Transient settings

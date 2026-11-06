@@ -1093,14 +1093,14 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
         addOption(dusk::i18n::tr("settings.input.gyro_rollgoal.key"), getSettings().game.enableGyroRollgoal,
             dusk::i18n::tr("settings.input.gyro_rollgoal.help"));
         config_percent_select(leftPane, rightPane, getSettings().game.gyroSensitivityY,
-            dusk::i18n::tr("settings.input.gyro_pitch.key"), dusk::i18n::tr("settings.input.gyro_pitch.help"), 25, 400, 5,
+            dusk::i18n::tr("settings.input.gyro_pitch.key"), dusk::i18n::tr("settings.input.gyro_pitch.help"), 25, 1500, 5,
             [] { return !gyro_enabled(); });
         config_percent_select(leftPane, rightPane, getSettings().game.gyroSensitivityX,
-            dusk::i18n::tr("settings.input.gyro_yaw.key"), dusk::i18n::tr("settings.input.gyro_yaw.help"), 25, 400, 5,
+            dusk::i18n::tr("settings.input.gyro_yaw.key"), dusk::i18n::tr("settings.input.gyro_yaw.help"), 25, 1500, 5,
             [] { return !gyro_enabled(); });
         config_percent_select(leftPane, rightPane, getSettings().game.gyroSensitivityRollgoal,
             dusk::i18n::tr("settings.input.rollgoal_sensitivity.key"), dusk::i18n::tr("settings.input.rollgoal_sensitivity.help"),
-            25, 400, 5,
+            25, 1500, 5,
             [] { return !getSettings().game.enableGyroRollgoal; });
         config_percent_select(leftPane, rightPane, getSettings().game.gyroDeadband, dusk::i18n::tr("settings.input.gyro_deadband.key"),
             dusk::i18n::tr("settings.input.gyro_deadband.help"), 0, 50, 1,

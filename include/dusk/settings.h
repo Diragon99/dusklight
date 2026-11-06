@@ -298,6 +298,7 @@ struct UserSettings {
         std::array<ActionBindConfigVar, 4> toggleMinimap;
         std::array<ActionBindConfigVar, 4> openDusklightMenu;
         std::array<ActionBindConfigVar, 4> turboSpeedButton;
+        std::array<ActionBindConfigVar, 4> resetGyro;
     } actionBindings;
 };
 
