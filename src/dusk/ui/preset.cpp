@@ -13,7 +13,14 @@ namespace {
 
 void applyPresetClassic() {
     auto& s = getSettings();
+#ifdef __SWITCH__
+    // Lock 4:3 / FIT swapchain resize aborts under NVK; keep stretch on Switch.
+    s.video.lockAspectRatio.setValue(false);
+    AuroraSetViewportPolicy(AURORA_VIEWPORT_STRETCH);
+#else
     s.video.lockAspectRatio.setValue(true);
+    AuroraSetViewportPolicy(AURORA_VIEWPORT_FIT);
+#endif
     s.game.bloomMode.setValue(BloomMode::Classic);
     s.game.depthOfFieldMode.setValue(DepthOfFieldMode::Classic);
     s.game.enableAchievementToasts.setValue(false);
@@ -23,7 +30,6 @@ void applyPresetClassic() {
     s.game.hideTvSettingsScreen.setValue(false);
     s.game.menuScalingMode.setValue(MenuScaling::GameCube);
     s.game.enableMenuPointer.setValue(false);
-    AuroraSetViewportPolicy(AURORA_VIEWPORT_FIT);
 }
 
 void applyPresetDusk() {

@@ -774,9 +774,19 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                 .helpText = dusk::i18n::tr("settings.video.lock_aspect.help"),
                 .onChange =
                     [](bool value) {
+#ifdef __SWITCH__
+                        // FIT resize crashes NVK on Switch; keep stretch only.
+                        (void)value;
+                        getSettings().video.lockAspectRatio.setValue(false);
+                        AuroraSetViewportPolicy(AURORA_VIEWPORT_STRETCH);
+#else
                         AuroraSetViewportPolicy(
                             value ? AURORA_VIEWPORT_FIT : AURORA_VIEWPORT_STRETCH);
+#endif
                     },
+#ifdef __SWITCH__
+                .isDisabled = [] { return true; },
+#endif
             });
         config_bool_select(leftPane, rightPane, getSettings().game.pauseOnFocusLost,
             {

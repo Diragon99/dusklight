@@ -9,7 +9,7 @@ exec > make_nro.log 2>&1          # all output to a log file (avoids PowerShell 
 set -x
 echo "elf size: $(du -h dusklight.elf | cut -f1)"
 # NACP DisplayVersion is char[16] (15 usable). Full in-game string is DUSK_VERSION_OVERRIDE.
-NACP_VERSION="${DUSK_NACP_VERSION:-1.4.4-gyro-fix}"
+NACP_VERSION="${DUSK_NACP_VERSION:-1.4.4-gyro-fix-diragon}"
 nacptool --create "Dusklight" "TwilitRealm" "$NACP_VERSION" dusklight.nacp
 echo "nacptool rc=$?"
 ICON=/dusklight/platforms/switch/icon.jpg

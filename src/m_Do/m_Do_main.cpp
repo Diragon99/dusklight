@@ -618,6 +618,14 @@ int game_main(int argc, char* argv[]) {
     log_build_info();
 
     dusk::config::LoadFromUserPreferences();
+#ifdef __SWITCH__
+    // ponytail: NVK swapchain resize with AURORA_VIEWPORT_FIT (Lock 4:3) aborts on Tegra and
+    // bricks subsequent boots via persisted config. Force stretch until FIT resize is fixed.
+    if (dusk::getSettings().video.lockAspectRatio.getValue()) {
+        dusk::getSettings().video.lockAspectRatio.setValue(false);
+        dusk::config::Save();
+    }
+#endif
     dusk::i18n::load(dusk::getSettings().backend.uiLanguage.getValue());
     if (dusk::getSettings().game.speedrunMode) {
         dusk::resetForSpeedrunMode();
@@ -704,11 +712,15 @@ int game_main(int argc, char* argv[]) {
         fmt::format("Dusklight {} [{}]", DUSK_WC_DESCRIBE, dusk::backend_name(auroraInfo.backend))
         .c_str());
 
+#ifdef __SWITCH__
+    AuroraSetViewportPolicy(AURORA_VIEWPORT_STRETCH);
+#else
     if (dusk::getSettings().video.lockAspectRatio) {
         AuroraSetViewportPolicy(AURORA_VIEWPORT_FIT);
     } else {
         AuroraSetViewportPolicy(AURORA_VIEWPORT_STRETCH);
     }
+#endif
 #ifdef __SWITCH__
     {
         char b[160];

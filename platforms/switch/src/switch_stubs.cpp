@@ -113,16 +113,22 @@ extern "C" {
             // tanking the framerate to <1fps. Crash reports still come from
             // Atmosphere (sdmc:/atmosphere/crash_reports/) so we don't need
             // per-line durability on dusklight.log.
-            // EXCEPTION: low-volume diagnostic lines ([mc]/[mw]/[ms]/[talk]/[cof]
-            // and [main01] boot breadcrumbs) force an immediate flush so a hang
-            // (e.g. the post-save black screen) leaves them on disk for FTP pull,
-            // instead of being stuck in the unflushed tail. These are rare, so the
-            // SD-write cost is negligible (not per-frame).
-            bool critical = (msg[0] == '[' &&
-                             (msg[1] == 'm' || msg[1] == 't' || msg[1] == 'c'));
+            // EXCEPTION: low-volume diagnostic lines force an immediate flush so a hang
+            // or User Break leaves them on disk instead of dying in the stdio buffer.
+            // [ABORT]/[TERMINATE]/[NVK-BUILD] must flush: the old [m]/[t]/[c] heuristic
+            // missed them (case-sensitive), which made crash boots look "logless".
+            bool critical = false;
+            if (msg[0] == '[') {
+                critical = (msg[1] == 'm' || msg[1] == 't' || msg[1] == 'c' ||
+                            msg[1] == 'A' || msg[1] == 'T' || msg[1] == 'N' || msg[1] == 'D');
+            }
             static unsigned log_lazy_ctr = 0;
             if (critical || (++log_lazy_ctr & 0x3f) == 0) {
                 fflush(dusk_log_file);
+                // Abort/terminate: fsync so Atmosphere killing the process cannot drop the line.
+                if (msg[1] == 'A' || msg[1] == 'T') {
+                    fsync(fileno(dusk_log_file));
+                }
             }
         }
         if (dusk_nxlink_up) {            // live stream to the nxlink PC (real hardware)
@@ -319,7 +325,8 @@ extern "C" void __wrap_abort(void) {
     char b[160];
     snprintf(b, sizeof b, "[ABORT] abort() caller RA=%p (base anchor dusk_switch_log@=%p)\n",
              __builtin_return_address(0), (void*)&dusk_switch_log);
-    dusk_switch_log(b);
+    dusk_switch_log(b);  // [ABORT] path fflush+fsync inside dusk_switch_log
+    fflush(stderr);
     __real_abort();
 }
 
