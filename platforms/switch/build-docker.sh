@@ -18,6 +18,12 @@ PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 # absolute paths stay valid and the Dawn/RmlUi build cache is preserved.
 # Override with DUSK_BUILD_DIR (POSIX form, e.g. /d/dusklight-build).
 HOST_BUILD_DIR="${DUSK_BUILD_DIR:-/d/dusklight-build}"
+# Named Docker volume for /dusklight/build-switch (Linux FS). On Docker Desktop +
+# Windows bind mounts, compiling Dawn into a host folder is multi-x slower.
+# Set DUSK_BUILD_VOLUME=hayato-build (or any name) to enable. Artifacts stay in
+# the volume; copy out with: docker run --rm -v "$VOL":/b -v "$HOST":/out alpine
+#   cp /b/dusklight.nro /out/
+BUILD_VOLUME="${DUSK_BUILD_VOLUME:-}"
 BUILD_DIR="$HOST_BUILD_DIR"
 LOG="${BUILD_DIR}/configure.log"
 MODE="${1:-configure}"
@@ -26,6 +32,11 @@ echo "=== Dusklight Switch build helper ==="
 echo "Project: $PROJECT_DIR"
 echo "Image:   $IMAGE"
 echo "Mode:    $MODE"
+if [[ -n "$BUILD_VOLUME" ]]; then
+    echo "Build:   docker volume '$BUILD_VOLUME' -> /dusklight/build-switch"
+else
+    echo "Build:   $HOST_BUILD_DIR (host bind mount)"
+fi
 echo ""
 
 # Probe Docker
@@ -40,7 +51,9 @@ if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
     docker pull "$IMAGE"
 fi
 
-mkdir -p "$BUILD_DIR"
+if [[ -z "$BUILD_VOLUME" ]]; then
+    mkdir -p "$BUILD_DIR"
+fi
 
 # On Windows MSYS bash, /c/foo gets translated weirdly when passed to docker.
 # Use a Windows-style path for -v on Windows, POSIX-style on Linux/macOS.
@@ -60,6 +73,10 @@ fi
 
 CONTAINER_BUILD_DIR="/dusklight/build-switch"
 
+if [[ -n "$BUILD_VOLUME" ]]; then
+    docker volume create "$BUILD_VOLUME" >/dev/null
+fi
+
 # CMake configure args (matches what we tried on the Windows host).
 # Disabled features that pull large optional deps for the first probe.
 CMAKE_ARGS=(
@@ -69,6 +86,8 @@ CMAKE_ARGS=(
     -DCMAKE_TOOLCHAIN_FILE=/opt/devkitpro/cmake/Switch.cmake
     -DCMAKE_BUILD_TYPE=Release
     -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+    # In-game / prelaunch version string (hbmenu NACP is set separately in make-nro.sh).
+    -DDUSK_VERSION_OVERRIDE=${DUSK_VERSION_OVERRIDE:-1.4.4-gyro-fix-diragon}
     -DDUSK_MOVIE_SUPPORT=OFF
     -DDUSK_ENABLE_UPDATE_CHECKER=OFF
     -DDUSK_ENABLE_DISCORD=OFF
@@ -93,6 +112,9 @@ CMAKE_ARGS=(
     -DDAWN_ENABLE_DESKTOP_GL=OFF
     -DTINT_BUILD_GLSL_WRITER=OFF
     -DTINT_BUILD_SPV_WRITER=ON
+    # Avoid requiring a fully generated protobuf tree under third_party/protobuf.
+    -DTINT_BUILD_IR_BINARY=OFF
+    -DDAWN_BUILD_PROTOBUF=OFF
 )
 
 run_docker() {
@@ -104,9 +126,17 @@ run_docker() {
         TTY_FLAGS="-it"
     fi
     # MSYS_NO_PATHCONV stops MSYS from converting /dusklight to C:/Program Files/Git/dusklight
+    # Source :cached = Docker Desktop may relax host coherency (faster reads on Win).
+    local SRC_MOUNT="$HOST_PATH:/dusklight:cached"
+    local BUILD_MOUNT
+    if [[ -n "$BUILD_VOLUME" ]]; then
+        BUILD_MOUNT="$BUILD_VOLUME:/dusklight/build-switch"
+    else
+        BUILD_MOUNT="$HOST_BUILD_DIR_WIN:/dusklight/build-switch"
+    fi
     MSYS_NO_PATHCONV=1 docker run --rm $TTY_FLAGS \
-        -v "$HOST_PATH:/dusklight" \
-        -v "$HOST_BUILD_DIR_WIN:/dusklight/build-switch" \
+        -v "$SRC_MOUNT" \
+        -v "$BUILD_MOUNT" \
         -v "$SWITCH_NVK_WIN:/switch-nvk:ro" \
         -w /dusklight \
         "$IMAGE" "$@"
